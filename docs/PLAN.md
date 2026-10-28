@@ -18,7 +18,7 @@ protected by CVAT's existing login and task permissions.
 | 5 | UI route + page that calls the endpoint | 2 | 13:20–14:00 |
 | 6 | Bar chart, empty state, error state with retry | 3, 4 | 14:00–14:45 |
 | 7 | Measure MO-1, 5 runs, raw output saved | 6 | 14:45–15:05 |
-| 8 | Group counts by shape type, only if time allows | 7 | — |
+| 8 | Group counts by shape type, done | 7 | — |
 | 9 | Finish docs, decision record, DoD evidence | 10 | 15:05–15:30 |
 | 10 | Loom recording, PR into my own fork's `main`, reply email | — | 15:30–16:00 |
 
@@ -49,6 +49,29 @@ Items 1–4 come first. Nothing after them starts until they work.
   item 7 moved to "only if time allows".
 - Resetting the admin password failed with `auth.User has been swapped for
   iam.User`. CVAT uses a custom user model; `get_user_model()` fixed it.
+- 12:30: CVAT's code inside the server image lives in /opt/cvat, not in the home
+  directory; found by asking Python where the `cvat` package loads from. I
+  bind-mount only my app and the two wired files for development.
+- 12:45: UI is built with Dockerfile.ui instead of a local dev server, because
+  Node 26 without Corepack/Yarn 4 is newer than the repo supports. After the
+  first build, each UI change took about 1:40 to see.
+- 13:00: floor items done ahead of the revised times, so item 7 was done.
+  Items 8 and 9 stay skipped for the reason above.
 
 ## Decision record
-(written when item 10 is reached)
+**Taken:** count in PostgreSQL with one ORM aggregate over LabeledShape, filtered to
+the task's annotation jobs and grouped by label name and shape type
+(cvat/apps/test/queries.py).
+
+**Rejected:** reuse CVAT's own annotation path (the dataset manager behind
+GET /api/tasks/{id}/annotations) and count the result in Python.
+
+**Why:** that path loads every shape with its points and attributes, and expands
+tracks per frame. A count only needs the number of rows, which the database
+returns in one query (MO-1 median 23.7 ms).
+
+**What rejecting it cost:** my query reads CVAT's internal tables directly, so it
+depends on the current schema and rules (LabeledShape, Job.type, skeleton
+parent). If CVAT changes those, this endpoint has to change too, while the
+annotation path would have followed CVAT's own semantics for free. It also
+counts only shapes: tracks (video) and tags are not included.

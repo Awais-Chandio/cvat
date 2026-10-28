@@ -31,4 +31,25 @@
 | Not included | First request after a container restart, browser render time |
 
 ## Result
-(raw output, median and spread go here after measurement)
+Raw output (`~/coco/mo1_raw.txt`, run after the UI build finished, no build running):
+```
+Wed Oct 28 13:13:51 PDT 2026
+run 1: 200 0.021027s
+run 2: 200 0.021624s
+run 3: 200 0.024219s
+run 4: 200 0.023674s
+run 5: 200 0.024105s
+--- summary ---
+runs: 5 | all HTTP 200: True
+times (ms): 21.0, 21.6, 24.2, 23.7, 24.1
+median: 23.7 ms | min: 21.0 ms | max: 24.2 ms | spread: 3.2 ms
+median <= 200 ms: PASS
+```
+
+- Median 23.7 ms, min 21.0 ms, max 24.2 ms, spread 3.2 ms. Target met.
+- The target was too loose: it was cleared by a factor of eight without any
+  optimisation. I set it with headroom for Rosetta emulation and had not yet seen
+  how cheap a single GROUP BY over 797 rows is.
+- Not measured: behaviour at scale. The task holds 797 shapes; the full COCO val
+  set would hold about 36,000. A useful next objective would be the same
+  measurement on the full set, with a target tied to what the page needs.
