@@ -4,7 +4,7 @@ from cvat.apps.engine.models import JobType, LabeledShape
 
 
 def count_shapes_by_label(task_id: int) -> list[dict]:
-    """Count drawn shapes per label for one task as a single GROUP BY in the database.
+    """Count drawn shapes per label and shape type for one task in a single GROUP BY.
 
     Only annotation jobs are counted: ground truth and consensus jobs hold copies
     of the same objects and would inflate the totals. Skeleton points (shapes with
@@ -16,8 +16,16 @@ def count_shapes_by_label(task_id: int) -> list[dict]:
             job__type=JobType.ANNOTATION,
             parent__isnull=True,
         )
-        .values("label__name")
+        .values("label__name", "type")
         .annotate(count=Count("id"))
-        .order_by("-count", "label__name")
     )
-    return [{"label": row["label__name"], "count": row["count"]} for row in rows]
+
+    per_label: dict[str, dict] = {}
+    for row in rows:
+        entry = per_label.setdefault(
+            row["label__name"], {"label": row["label__name"], "count": 0, "types": {}}
+        )
+        entry["count"] += row["count"]
+        entry["types"][row["type"]] = row["count"]
+
+    return sorted(per_label.values(), key=lambda entry: (-entry["count"], entry["label"]))
