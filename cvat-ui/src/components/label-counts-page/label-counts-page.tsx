@@ -15,20 +15,23 @@ import Spin from 'antd/lib/spin';
 import Text from 'antd/lib/typography/Text';
 import Title from 'antd/lib/typography/Title';
 import {
-    Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip,
+    Chart as ChartJS, BarElement, CategoryScale, Legend, LinearScale, Tooltip,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
 import { getCore } from 'cvat-core-wrapper';
 import GoBackButton from 'components/common/go-back-button';
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
+ChartJS.register(BarElement, CategoryScale, Legend, LinearScale, Tooltip);
 
 const core = getCore();
+
+const SHAPE_TYPE_COLORS = ['#1890ff', '#fa8c16', '#52c41a', '#eb2f96', '#722ed1'];
 
 interface LabelCount {
     label: string;
     count: number;
+    types: Record<string, number>;
 }
 
 interface LabelCountsResponse {
@@ -81,6 +84,12 @@ function LabelCountsPage(): JSX.Element {
         content = <Empty description='This task has no annotations yet.' />;
     } else {
         const { labels, total } = state.data;
+        const typeTotals: Record<string, number> = {};
+        labels.forEach((row) => Object.entries(row.types).forEach(([type, count]) => {
+            typeTotals[type] = (typeTotals[type] ?? 0) + count;
+        }));
+        const shapeTypes = Object.keys(typeTotals)
+            .sort((a, b) => typeTotals[b] - typeTotals[a] || a.localeCompare(b));
         content = (
             <>
                 <Text className='cvat-label-counts-total'>
@@ -90,17 +99,20 @@ function LabelCountsPage(): JSX.Element {
                     <Bar
                         data={{
                             labels: labels.map((row) => row.label),
-                            datasets: [{
-                                label: 'Shapes',
-                                data: labels.map((row) => row.count),
-                                backgroundColor: '#1890ff',
-                            }],
+                            datasets: shapeTypes.map((type, index) => ({
+                                label: type,
+                                data: labels.map((row) => row.types[type] ?? 0),
+                                backgroundColor: SHAPE_TYPE_COLORS[index % SHAPE_TYPE_COLORS.length],
+                            })),
                         }}
                         options={{
                             indexAxis: 'y',
                             maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+                            plugins: { legend: { display: true, position: 'top' } },
+                            scales: {
+                                x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+                                y: { stacked: true },
+                            },
                         }}
                     />
                 </div>
