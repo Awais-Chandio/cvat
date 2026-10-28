@@ -1,0 +1,19 @@
+// Copyright (C) CVAT.ai Corporation
+//
+// SPDX-License-Identifier: MIT
+
+.cvat-label-counts-page {
+    padding-top: 30px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.cvat-label-counts-total {
+    display: block;
+    margin-bottom: 16px;
+}
+
+.cvat-label-counts-spinner {
+    display: block;
+    margin: 48px auto;
+}
