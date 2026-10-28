@@ -9,7 +9,14 @@
 - Data: COCO 2017 val annotations (`instances_val2017.json`), fetched from a
   Hugging Face mirror because the official host stalled on my network;
   SHA256 checked against the hash published for the file. Number of images
-  in the task: (filled after import)
+  in the task: 100
+- Annotation file SHA256: e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f
+- Images: images.cocodataset.org timed out on every request from my network, so the
+  100 images are grey placeholders with the exact file names and sizes from the COCO
+  file. Annotations are the real COCO ones. The endpoint counts annotations, not
+  pixels, so counts are unaffected.
+- Ground truth for the first 100 images by file name: 100 images, 714 annotations,
+  72 labels (person 287, wine glass 24, cup 24, car 21, ...).
 
 ## MO-1: label-count endpoint response time
 | Field | Entry |
